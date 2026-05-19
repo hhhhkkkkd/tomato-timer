@@ -10,7 +10,7 @@ struct ContentView: View {
     
     // 动画控制
     @State private var timeScale: CGFloat = 1.0
-    @State private var receiptProgress: CGFloat = 0.0 // 控制收据吐出的进度 (0.0 到 1.0)
+    @State private var receiptProgress: CGFloat = 0.0
     @State private var showReceipt = false
     
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -36,12 +36,10 @@ struct ContentView: View {
         return formatter.string(from: Date())
     }
     
-    // 触发模拟打印机的“滋滋”吐纸动画
     private func triggerReceiptAnimation() {
         showReceipt = true
         receiptProgress = 0.0
         
-        // 分段式定时器：模拟热敏打印机一卡一卡吐纸的复古感
         var currentStep = 0
         let totalSteps = 5
         
@@ -58,40 +56,46 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
+            // 全黑背景
             Color.black.ignoresSafeArea()
             
+            // 核心：限制整体界面的最大宽度，防止在 Mac 屏幕上横向无限拉伸
             VStack(spacing: 25) {
                 Text("REVISION TIMER v1.1")
                     .font(.system(size: 18, weight: .bold, design: .monospaced))
                     .foregroundColor(pixelGreen)
-                    .padding(.top)
+                    .padding(.top, 30)
                 
                 // 时间输入区
-                HStack {
+                HStack(spacing: 12) {
                     Text("SET MINUTES:")
                         .font(.system(size: 14, weight: .bold, design: .monospaced))
                         .foregroundColor(pixelGreen)
                     
-                    // 彻底像素化的输入框
-                    TextField("", text: $inputMinutes)
-                        .textFieldStyle(.plain) // 核心：移除 macOS/iOS 的默认立体阴影和边框
-                        .font(.system(size: 14, weight: .bold, design: .monospaced))
-                        .foregroundColor(.black) // 文字全黑
-                        .multilineTextAlignment(.center) // 文字居中
-                        .padding(6)
-                        .frame(width: 70)
-                        .background(pixelGreen) // 整个背景统一为最纯正的高级绿
-                        .border(pixelGreen, width: 1) // 确保边缘颜色完全一致
-                        .modifier(KeyboardTypeModifier())
-                        .disabled(isRunning || isPaused)
-                        .onChange(of: inputMinutes) { newValue in
-                            let filtered = newValue.filter { "0123456789".contains($0) }
-                            if filtered != newValue { inputMinutes = filtered }
-                            if let mins = Double(filtered), mins > 0 {
-                                totalMinutes = mins
-                                remainingSeconds = Int(totalMinutes * 60)
-                            }
+                    // 彻底解决 macOS 颜色杂色问题：用 ZStack 手工打造完美绿色纯色框
+                    ZStack {
+                        pixelGreen // 底部完全填充高级绿
+                        
+                        TextField("", text: $inputMinutes)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 14, weight: .bold, design: .monospaced))
+                            .foregroundColor(.black)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 4)
+                            // 禁用 macOS 独有的焦点环蓝色阴影
+                            .labelsHidden()
+                    }
+                    .frame(width: 65, height: 28)
+                    .contentShape(Rectangle())
+                    .disabled(isRunning || isPaused)
+                    .onChange(of: inputMinutes) { newValue in
+                        let filtered = newValue.filter { "0123456789".contains($0) }
+                        if filtered != newValue { inputMinutes = filtered }
+                        if let mins = Double(filtered), mins > 0 {
+                            totalMinutes = mins
+                            remainingSeconds = Int(totalMinutes * 60)
                         }
+                    }
                 }
                 .padding(.horizontal)
                 
@@ -107,17 +111,17 @@ struct ContentView: View {
                         .animation(.linear(duration: 1), value: progress)
                     
                     Text(timeString(from: remainingSeconds))
-                        .font(.system(size: 48, weight: .black, design: .monospaced))
+                        .font(.system(size: 46, weight: .black, design: .monospaced))
                         .foregroundColor(pixelGreen)
                         .shadow(color: pixelGreen.opacity(0.6), radius: 10)
                         .scaleEffect(timeScale)
                         .animation(.spring(response: 0.2, dampingFraction: 0.4), value: timeScale)
                 }
-                .frame(width: 220, height: 220)
+                .frame(width: 210, height: 210)
                 .padding(.vertical, 10)
                 
                 // 控制按钮
-                HStack(spacing: 15) {
+                HStack(spacing: 12) {
                     Button(action: {
                         if isPaused {
                             isPaused = false
@@ -130,22 +134,24 @@ struct ContentView: View {
                         receiptProgress = 0.0
                     }) {
                         Text(isPaused ? "RESUME" : "START")
-                            .font(.system(size: 14, weight: .bold, design: .monospaced))
-                            .frame(width: 85, height: 35)
+                            .font(.system(size: 13, weight: .bold, design: .monospaced))
+                            .frame(width: 80, height: 32)
                             .background(isRunning && !isPaused ? Color.clear : pixelGreen)
                             .foregroundColor(isRunning && !isPaused ? pixelDarkGreen : .black)
                             .border(pixelGreen, width: 2)
                     }
+                    .buttonStyle(.plain) // 剥离 Mac 默认按钮样式
                     .disabled(isRunning && !isPaused)
                     
                     Button(action: { isPaused = true }) {
                         Text("PAUSE")
-                            .font(.system(size: 14, weight: .bold, design: .monospaced))
-                            .frame(width: 85, height: 35)
+                            .font(.system(size: 13, weight: .bold, design: .monospaced))
+                            .frame(width: 80, height: 32)
                             .background(isPaused ? pixelGreen : Color.clear)
                             .foregroundColor(isPaused ? .black : pixelGreen)
                             .border(pixelGreen, width: 2)
                     }
+                    .buttonStyle(.plain)
                     .disabled(!isRunning || isPaused)
                     
                     Button(action: {
@@ -156,17 +162,18 @@ struct ContentView: View {
                         receiptProgress = 0.0
                     }) {
                         Text("STOP")
-                            .font(.system(size: 14, weight: .bold, design: .monospaced))
-                            .frame(width: 85, height: 35)
+                            .font(.system(size: 13, weight: .bold, design: .monospaced))
+                            .frame(width: 80, height: 32)
                             .foregroundColor(.red)
                             .border(Color.red, width: 2)
                     }
+                    .buttonStyle(.plain)
                     .disabled(!isRunning && !isPaused)
                 }
                 
                 // 打印机及收据区域
                 VStack(spacing: 0) {
-                    // 打印机槽口 - 已根据你的要求修改
+                    // 打印机槽口
                     Rectangle()
                         .fill(Color(white: 0.15))
                         .frame(width: 240, height: 10)
@@ -188,23 +195,7 @@ struct ContentView: View {
                 
                 Spacer()
             }
-        }
-        .onReceive(timer) { _ in
-            guard isRunning, !isPaused else { return }
-            
-            if remainingSeconds > 0 {
-                remainingSeconds -= 1
-                timeScale = 1.05
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    timeScale = 1.0
-                }
-            }
-            
-            if remainingSeconds == 0 {
-                isRunning = false
-                isPaused = false
-                triggerReceiptAnimation()
-            }
+            .frame(width: 360) // 核心锁死：强制让面板保持在紧凑的 360 像素宽度，自动居中
         }
     }
 }
@@ -259,17 +250,6 @@ struct ReceiptView: View {
         .background(Color(white: 0.9))
         .border(Color.white, width: 2)
         .shadow(color: Color.green.opacity(0.15), radius: 8, y: 4)
-    }
-}
-
-// 跨平台键盘适配
-struct KeyboardTypeModifier: ViewModifier {
-    func body(content: Content) -> some View {
-        #if os(iOS)
-        content.keyboardType(.numberPad)
-        #else
-        content
-        #endif
     }
 }
 
