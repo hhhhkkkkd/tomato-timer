@@ -18,7 +18,7 @@
 ## 🚀 使用方式
 
 ### 🌐 网页版
-**[[hhhhkkkkd.github.io/tomato-timer](https://hhhhkkkkd.github.io/tomato-timer)](https://hhhhkkkkd.github.io/tomato-timer/)**
+**(https://hhhhkkkkd.github.io/tomato-timer)](https://hhhhkkkkd.github.io/tomato-timer/)**
 
 ### 💻 Mac App
 ```bash
