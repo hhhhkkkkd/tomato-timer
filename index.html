@@ -3,38 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>番茄钟</title>
+    <title>REVISION TIMER v1.1</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            font-family: 'Share Tech Mono', monospace;
+            background: #000;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            color: #00ff55;
         }
-        .container { text-align: center; color: white; padding: 30px; }
-        h1 { font-size: 2rem; margin-bottom: 25px; font-weight: 300; }
-        .timer-circle { position: relative; width: 260px; height: 260px; margin: 0 auto 25px; }
+        
+        .container { text-align: center; padding: 30px; }
+        
+        h1 { font-size: 1.4rem; margin-bottom: 25px; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0,255,85,0.5); }
+        
+        .settings { margin-bottom: 20px; }
+        .settings input {
+            font-family: 'Share Tech Mono', monospace;
+            width: 60px; padding: 8px; text-align: center; font-size: 1rem;
+            background: #00ff55; color: #000; border: 1px solid #00ff55;
+        }
+        .settings input:disabled { opacity: 0.5; }
+        
+        .timer-circle { position: relative; width: 240px; height: 240px; margin: 0 auto 25px; }
+        
         .time-display {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 3.5rem; font-weight: 700;
-            transition: transform 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            font-size: 3rem; font-weight: bold;
+            text-shadow: 0 0 15px rgba(0,255,85,0.7);
+            transition: transform 0.15s;
         }
-        .time-display.pop { transform: translate(-50%, -50%) scale(1.25); }
-        .settings { margin-bottom: 20px; font-size: 1rem; }
-        .settings input {
-            width: 55px; padding: 8px; text-align: center;
-            border: 1px solid rgba(255,255,255,0.3); border-radius: 8px;
-            background: rgba(255,255,255,0.1); color: white; margin-left: 8px;
-        }
-        .settings input:disabled { opacity: 0.5; }
+        .time-display.pop { transform: translate(-50%, -50%) scale(1.08); }
+        
         .buttons { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        
         .btn {
-            padding: 12px 28px; font-size: 1rem; font-weight: 600;
-            border: none; border-radius: 50px; cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            padding: 10px 24px; font-size: 0.9rem; font-weight: bold;
+            border: 2px solid #00ff55; cursor: pointer; transition: all 0.15s;
+            text-transform: uppercase;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-start { background: #00ff55; color: #000; }
+        .btn-pause { background: transparent; color: #00ff55; }
+        .btn-stop  { border-color: #ff3333; color: #ff3333; background: transparent; }
+        
+        .printer-slot {
+            width: 240px; height: 8px; background: #1a1a1a;
+            margin: 20px auto 0; border: 1px solid #003311;
+        }
+        
+        .receipt {
+            width: 220px; margin: 0 auto; background: #e8e8e8;
+            color: #000; font-size: 0.75rem; padding: 15px;
+            text-align: left; line-height: 1.6;
+            border: 2px solid #fff;
+            box-shadow: 0 5px 15px rgba(0,255,85,0.15);
+            opacity: 0; transform: translateY(-20px);
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .receipt.show { opacity: 1; transform: translateY(0); }
+        
+        .receipt .line { display: flex; justify-content: space-between; }
+        .receipt .center { text-align: center; }
+        .receipt .dots { color: #999; font-size: 0.6rem; text-align: center; letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>REVISION TIMER v1.1</h1>
+        
+        <div class="settings">
+            <label>SET MINUTES: </label>
+            <input type="text" id="minutesInput" value="25" maxlength="3">
+        </div>
+        
+        <div class="timer-circle">
+            <svg width="240" height="240" viewBox="0 0 240 240" style="transform: rotate(-90deg);">
+                <circle cx="120" cy="120" r="105" fill="none" stroke="#003311" stroke-width="14" stroke-dasharray="6 6"/>
+                <circle id="progressCircle" cx="120" cy="120" r="105" fill="none" stroke="#00ff55" stroke-width="14" stroke-dasharray="6 6" stroke-linecap="butt"/>
+            </svg>
+            <div class="time-display" id="timeDisplay">25:00</div>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn btn-start" id="btnStart">START</button>
+            <button class="btn btn-pause" id="btnPause" disabled>PAUSE</button>
+            <button class="btn btn-stop"  id="btnStop"  disabled>STOP</button>
+        </div>
+        
+        <div class="printer-slot"></div>
+        <div class="receipt" id="receipt"></div>
+    </div>
+    
+    <script>
+        const CIRCLE = 2 * Math.PI * 105;
+        let total = 25 * 60, remain = total, running = false, paused = false, timer = null;
+        
+        const input = document.getElementById('minutesInput');
+        const display = document.getElementById('timeDisplay');
+        const circle = document.getElementById('progressCircle');
+        const receipt = document.getElementById('receipt');
+        const btnS = document.getElementById('btnStart');
+        const btnP = document.getElementById('btnPause');
+        const btnT = document.getElementById('btnStop');
+        
+        circle.style.strokeDasharray = '6 6';
+        circle.style.strokeDashoffset = '0';
+        
+        function update() {
+            const m = Math.floor(remain / 60), s = remain % 60;
+            display.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+            const p = remain / total;
+            circle.style.strokeDashoffset = CIRCLE * (1 - p);
+            circle.style.stroke = p > 0.5 ? '#00ff55' : p > 0.2 ? '#ffff00' : '#ff3333';
+        }
+        
+        function pop() { display.classList.add('pop'); setTimeout(() => display.classList.remove('pop'), 120); }
+        
+        function start() {
+            timer = setInterval(() => {
+                if (remain > 0) { remain--; update(); pop(); }
+                if (remain === 0) { clearInterval(timer); running = false; paused = false; updateBtns(); showReceipt(); }
+            }, 1000);
+        }
+        
+        function showReceipt() {
+            const now = new Date();
+            const dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+            const ticket = Math.floor(Math.random()*9000)+1000;
+            const h = Math.floor(total/60/60), m = Math.floor(total/60)%60;
+            const dur = h > 0 ? String(h).padStart(2,'0')+'H '+String(m).padStart(2,'0')+'M' : String(total/60).padStart(2,'0')+' MINS';
+            
+            receipt.innerHTML = `
+                <div class="center">*********************</div>
+                <div class="center">* SESSION COMPLETE *</div>
+                <div class="center">*********************</div>
+                <br>
+                <div class="line"><span>DATE:</span><span>${dateStr}</span></div>
+                <div class="line"><span>TICKET:</span><span>#${ticket}</span></div>
+                <div class="line"><span>ELAPSED:</span><span>${dur}</span></div>
+                <div class="line"><span>STATUS:</span><span>100% PASSED</span></div>
+                <br>
+                <div class="center">---------------------</div>
+                <div class="center">* GOOD JOB! *</div>
+                <div class="center">---------------------</div>
+                <div class="dots">v v v v v v v v v v v</div>
+            `;
+            receipt.classList.add('show');
+        }
+        
+        function updateBtns() {
+            btnS.disabled = running && !paused;
+            btnP.disabled = !running || paused;
+            btnT.disabled = !running && !paused;
+            input.disabled = running || paused;
+            if (running && !paused) { btnS.style.background='transparent'; btnS.style.color='#00ff55'; }
+            else { btnS.style.background='#00ff55'; btnS.style.color='#000'; }
+            if (paused) { btnP.style.background='#00ff55'; btnP.style.color='#000'; }
+            else { btnP.style.background='transparent'; btnP.style.color='#00ff55'; }
+        }
+        
+        input.addEventListener('input', () => {
+            let v = input.value.replace(/[^0-9]/g,''); input.value = v;
+            if (v && parseInt(v) > 0) { total = parseInt(v) * 60; remain = total; update(); }
+        });
+        
+        btnS.onclick = () => {
+            receipt.classList.remove('show');
+            if (paused) { paused = false; start(); }
+            else { remain = total; running = true; paused = false; update(); start(); }
+            updateBtns();
+        };
+        btnP.onclick = () => { paused = true; clearInterval(timer); updateBtns(); };
+        btnT.onclick = () => {
+            running = false; paused = false; clearInterval(timer);
+            remain = total; update(); receipt.classList.remove('show'); updateBtns();
+        };
+        
+        update();
+    </script>
+</body>
+</html>            border: none; border-radius: 50px; cursor: pointer;
             transition: transform 0.2s, opacity 0.2s; color: white;
         }
         .btn:active { transform: scale(0.95); }
