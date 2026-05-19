@@ -56,15 +56,15 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            // 全黑背景
+            // 全黑底色背景
             Color.black.ignoresSafeArea()
             
-            // 核心：限制整体界面的最大宽度，防止在 Mac 屏幕上横向无限拉伸
+            // 核心：强制限制内容整体宽度为 380，模拟手机或者复古紧凑机身
             VStack(spacing: 25) {
                 Text("REVISION TIMER v1.1")
                     .font(.system(size: 18, weight: .bold, design: .monospaced))
                     .foregroundColor(pixelGreen)
-                    .padding(.top, 30)
+                    .padding(.top, 35)
                 
                 // 时间输入区
                 HStack(spacing: 12) {
@@ -72,21 +72,19 @@ struct ContentView: View {
                         .font(.system(size: 14, weight: .bold, design: .monospaced))
                         .foregroundColor(pixelGreen)
                     
-                    // 彻底解决 macOS 颜色杂色问题：用 ZStack 手工打造完美绿色纯色框
+                    // 彻底解决 Mac 杂色：用原生 Text 覆盖在上面，做绝对纯净的亮绿输入框
                     ZStack {
-                        pixelGreen // 底部完全填充高级绿
+                        Rectangle()
+                            .fill(pixelGreen)
                         
                         TextField("", text: $inputMinutes)
                             .textFieldStyle(.plain)
                             .font(.system(size: 14, weight: .bold, design: .monospaced))
                             .foregroundColor(.black)
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, 4)
-                            // 禁用 macOS 独有的焦点环蓝色阴影
-                            .labelsHidden()
+                            .padding(.horizontal, 2)
                     }
-                    .frame(width: 65, height: 28)
-                    .contentShape(Rectangle())
+                    .frame(width: 60, height: 26)
                     .disabled(isRunning || isPaused)
                     .onChange(of: inputMinutes) { newValue in
                         let filtered = newValue.filter { "0123456789".contains($0) }
@@ -120,7 +118,7 @@ struct ContentView: View {
                 .frame(width: 210, height: 210)
                 .padding(.vertical, 10)
                 
-                // 控制按钮
+                // 控制按钮（剥离所有 Mac 默认阴影）
                 HStack(spacing: 12) {
                     Button(action: {
                         if isPaused {
@@ -140,7 +138,7 @@ struct ContentView: View {
                             .foregroundColor(isRunning && !isPaused ? pixelDarkGreen : .black)
                             .border(pixelGreen, width: 2)
                     }
-                    .buttonStyle(.plain) // 剥离 Mac 默认按钮样式
+                    .buttonStyle(.plain)
                     .disabled(isRunning && !isPaused)
                     
                     Button(action: { isPaused = true }) {
@@ -173,14 +171,12 @@ struct ContentView: View {
                 
                 // 打印机及收据区域
                 VStack(spacing: 0) {
-                    // 打印机槽口
                     Rectangle()
                         .fill(Color(white: 0.15))
                         .frame(width: 240, height: 10)
                         .overlay(Rectangle().stroke(pixelDarkGreen, lineWidth: 1))
                         .zIndex(2)
                     
-                    // 收据组件
                     ZStack(alignment: .top) {
                         if showReceipt {
                             ReceiptView(durationMinutes: Int(totalMinutes), dateStr: currentDateString)
@@ -195,8 +191,10 @@ struct ContentView: View {
                 
                 Spacer()
             }
-            .frame(width: 360) // 核心锁死：强制让面板保持在紧凑的 360 像素宽度，自动居中
+            .frame(width: 380) // 锁死面板宽度，不论窗口多大，内容永远精致紧凑居中
         }
+        // 设置整个 Mac 软件打开时的初始和最小窗口大小
+        .frame(minWidth: 400, minHeight: 650)
     }
 }
 
