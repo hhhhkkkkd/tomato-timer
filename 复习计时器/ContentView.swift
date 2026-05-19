@@ -15,8 +15,13 @@ struct ContentView: View {
     
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
+    // 核心修改点：调整进度计算
     private var progress: Double {
-        guard totalMinutes > 0 else { return 0 }
+        guard totalMinutes > 0 else { return 1.0 }
+        // 如果倒计时结束归零了，强制返回 1.0 (100%)，让亮绿色虚线圈保持满格
+        if remainingSeconds == 0 {
+            return 1.0
+        }
         return Double(remainingSeconds) / (totalMinutes * 60)
     }
     
@@ -61,10 +66,8 @@ struct ContentView: View {
             
             // 核心：强制限制内容整体宽度为 380，模拟手机或者复古紧凑机身
             VStack(spacing: 25) {
-                Text("REVISION TIMER v1.1")
-                    .font(.system(size: 18, weight: .bold, design: .monospaced))
-                    .foregroundColor(pixelGreen)
-                    .padding(.top, 35)
+                
+                // 💡 已经为你删除了这里的 REVISION TIMER v1.1 标题
                 
                 // 时间输入区
                 HStack(spacing: 12) {
@@ -96,6 +99,7 @@ struct ContentView: View {
                     }
                 }
                 .padding(.horizontal)
+                .padding(.top, 45) // 稍微加一点顶部留白，让布局更美观
                 
                 // 环形倒计时
                 ZStack {
@@ -195,6 +199,23 @@ struct ContentView: View {
         }
         // 设置整个 Mac 软件打开时的初始和最小窗口大小
         .frame(minWidth: 400, minHeight: 650)
+        .onReceive(timer) { _ in
+            guard isRunning, !isPaused else { return }
+            
+            if remainingSeconds > 0 {
+                remainingSeconds -= 1
+                timeScale = 1.05
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    timeScale = 1.0
+                }
+            }
+            
+            if remainingSeconds == 0 {
+                isRunning = false
+                isPaused = false
+                triggerReceiptAnimation()
+            }
+        }
     }
 }
 
