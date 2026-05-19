@@ -23,7 +23,6 @@
         
         h1 { font-size: 1.4rem; margin-bottom: 25px; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0,255,85,0.5); }
         
-        /* ====== 终极抹平浏览器默认样式 ====== */
         input, button, input:focus, button:focus {
             outline: none !important;
             box-shadow: none !important;
@@ -81,7 +80,7 @@
         
         .printer-slot {
             width: 240px; height: 8px; background: #1a1a1a;
-            margin: 20px auto 0; border: 1px solid #003311;
+            margin: 20px auto 0; border: 1px solid #004014;
         }
         
         .receipt {
@@ -111,7 +110,7 @@
         
         <div class="timer-circle">
             <svg width="240" height="240" viewBox="0 0 240 240" style="transform: rotate(-90deg);">
-                <circle cx="120" cy="120" r="105" fill="none" stroke="#003311" stroke-width="14" stroke-dasharray="6 6"/>
+                <circle cx="120" cy="120" r="105" fill="none" stroke="#00ff55" stroke-opacity="0.25" stroke-width="14" stroke-dasharray="6 6"/>
                 <circle id="progressCircle" cx="120" cy="120" r="105" fill="none" stroke="#00ff55" stroke-width="14" stroke-dasharray="6 6" stroke-linecap="butt"/>
             </svg>
             <div class="time-display" id="timeDisplay">25:00</div>
@@ -147,7 +146,7 @@
             display.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
             const p = remain / total;
             circle.style.strokeDashoffset = CIRCLE * (1 - p);
-            circle.style.stroke = p > 0.5 ? '#00ff55' : p > 0.2 ? '#ffff00' : '#ff3333';
+            circle.style.stroke = '#00ff55';
         }
         
         function pop() { display.classList.add('pop'); setTimeout(() => display.classList.remove('pop'), 120); }
