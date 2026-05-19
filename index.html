@@ -23,6 +23,29 @@
         
         h1 { font-size: 1.4rem; margin-bottom: 25px; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0,255,85,0.5); }
         
+        /* ====== 终极抹平浏览器默认样式 ====== */
+        input, button, input:focus, button:focus {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-appearance: none !important;
+            appearance: none !important;
+        }
+        
+        input:focus {
+            background-color: #00ff55 !important;
+            color: #000000 !important;
+        }
+        
+        input::selection {
+            background-color: #004014 !important;
+            color: #00ff55 !important;
+        }
+        
+        input::-moz-selection {
+            background-color: #004014 !important;
+            color: #00ff55 !important;
+        }
+        
         .settings { margin-bottom: 20px; }
         .settings input {
             font-family: 'Share Tech Mono', monospace;
@@ -48,7 +71,7 @@
             font-family: 'Share Tech Mono', monospace;
             padding: 10px 24px; font-size: 0.9rem; font-weight: bold;
             border: 2px solid #00ff55; cursor: pointer; transition: all 0.15s;
-            text-transform: uppercase;
+            text-transform: uppercase; background: transparent;
         }
         .btn:active { transform: scale(0.95); }
         .btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -189,86 +212,6 @@
             remain = total; update(); receipt.classList.remove('show'); updateBtns();
         };
         
-        update();
-    </script>
-</body>
-</html>            border: none; border-radius: 50px; cursor: pointer;
-            transition: transform 0.2s, opacity 0.2s; color: white;
-        }
-        .btn:active { transform: scale(0.95); }
-        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .btn-start { background: #4CAF50; }
-        .btn-pause { background: #FF9800; }
-        .btn-stop  { background: #f44336; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🍅 番茄钟</h1>
-        <div class="settings">
-            <label>专注时长(分钟):</label>
-            <input type="text" id="minutesInput" value="25" maxlength="3">
-        </div>
-        <div class="timer-circle">
-            <svg width="260" height="260" viewBox="0 0 260 260" style="transform: rotate(-90deg);">
-                <circle cx="130" cy="130" r="115" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="12"/>
-                <circle id="progressCircle" cx="130" cy="130" r="115" fill="none" stroke="#4CAF50" stroke-width="12" stroke-linecap="round"/>
-            </svg>
-            <div class="time-display" id="timeDisplay">25:00</div>
-        </div>
-        <div class="buttons">
-            <button class="btn btn-start" id="btnStart">开始</button>
-            <button class="btn btn-pause" id="btnPause" disabled>暂停</button>
-            <button class="btn btn-stop"  id="btnStop"  disabled>停止</button>
-        </div>
-    </div>
-    <script>
-        const CIRCLE = 2 * Math.PI * 115;
-        let total = 25 * 60, remain = total, running = false, paused = false, timer = null;
-        const input = document.getElementById('minutesInput'),
-              display = document.getElementById('timeDisplay'),
-              circle = document.getElementById('progressCircle'),
-              btnS = document.getElementById('btnStart'),
-              btnP = document.getElementById('btnPause'),
-              btnT = document.getElementById('btnStop');
-        circle.style.strokeDasharray = CIRCLE;
-        circle.style.strokeDashoffset = '0';
-
-        function update() {
-            const m = Math.floor(remain / 60), s = remain % 60;
-            display.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-            const p = remain / total;
-            circle.style.strokeDashoffset = CIRCLE * (1 - p);
-            circle.style.stroke = p > 0.5 ? '#4CAF50' : p > 0.2 ? '#FFEB3B' : '#f44336';
-        }
-        function pop() { display.classList.add('pop'); setTimeout(() => display.classList.remove('pop'), 150); }
-        function start() {
-            timer = setInterval(() => {
-                if (remain > 0) { remain--; update(); pop(); }
-                if (remain === 0) { clearInterval(timer); running = false; paused = false; updateBtns(); flash(); }
-            }, 1000);
-        }
-        function flash() {
-            let c = 0;
-            const f = setInterval(() => { circle.style.opacity = c % 2 ? '0.3' : '1'; c++; if (c >= 6) clearInterval(f); }, 400);
-        }
-        function updateBtns() {
-            btnS.disabled = running && !paused;
-            btnP.disabled = !running || paused;
-            btnT.disabled = !running && !paused;
-            input.disabled = running || paused;
-        }
-        input.addEventListener('input', () => {
-            let v = input.value.replace(/[^0-9]/g,''); input.value = v;
-            if (v && parseInt(v) > 0) { total = parseInt(v) * 60; remain = total; update(); }
-        });
-        btnS.onclick = () => {
-            if (paused) { paused = false; start(); }
-            else { remain = total; running = true; paused = false; update(); start(); }
-            updateBtns();
-        };
-        btnP.onclick = () => { paused = true; clearInterval(timer); updateBtns(); };
-        btnT.onclick = () => { running = false; paused = false; clearInterval(timer); remain = total; update(); updateBtns(); };
         update();
     </script>
 </body>
